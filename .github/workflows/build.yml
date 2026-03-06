@@ -3,52 +3,40 @@ name: Build Flutter APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Step 3: Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
 
-      # Step 4: Get dependencies
       - name: Get Dependencies
         run: flutter pub get
 
-      # Step 5: Build Debug APK
+      # Critical: generates Hive adapters & JSON serialization
+      - name: Run Build Runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Build Debug APK
         run: flutter build apk --debug
 
-      # Step 6: Build Release APK
-      - name: Build Release APK
-        run: flutter build apk --release
-
-      # Step 7: Upload APK as artifact
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: billing-app-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
